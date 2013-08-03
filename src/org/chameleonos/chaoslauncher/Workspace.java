@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
  * Copytight (C) 2011 The CyanogenMod Project
+ * Copyright (C) 2013 The ChameleonOS Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +62,6 @@ import android.view.animation.Interpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import android.widget.Toast;
 import org.chameleonos.chaoslauncher.FolderIcon.FolderRingAnimator;
 import org.chameleonos.chaoslauncher.LauncherSettings.Favorites;
 import org.chameleonos.chaoslauncher.preference.PreferencesProvider;
@@ -717,6 +717,8 @@ public class Workspace extends PagedView
                 ((FolderIcon) child).setTextVisible(false);
             } else if (child instanceof BubbleTextView) {
                 ((BubbleTextView) child).setTextVisible(false);
+            } else if (child instanceof AppIconView) {
+                ((AppIconView) child).setTextVisible(false);
             }
         } else {
             if (!mHideIconLabels) {
@@ -725,12 +727,16 @@ public class Workspace extends PagedView
                     ((FolderIcon) child).setTextVisible(true);
                 } else if (child instanceof BubbleTextView) {
                     ((BubbleTextView) child).setTextVisible(true);
+                } else if (child instanceof AppIconView) {
+                    ((AppIconView) child).setTextVisible(true);
                 }
             } else {
                 if (child instanceof FolderIcon) {
                     ((FolderIcon) child).setTextVisible(false);
                 } else if (child instanceof BubbleTextView) {
                     ((BubbleTextView) child).setTextVisible(false);
+                } else if (child instanceof AppIconView) {
+                    ((AppIconView) child).setTextVisible(false);
                 }
             }
 
@@ -2589,7 +2595,7 @@ public class Workspace extends PagedView
 
         Point dragVisualizeOffset = null;
         Rect dragRect = null;
-        if (child instanceof BubbleTextView || child instanceof PagedViewIcon) {
+        if (child instanceof BubbleTextView || child instanceof AppIconView || child instanceof PagedViewIcon) {
             int iconSize = r.getDimensionPixelSize(R.dimen.app_icon_size);
             int iconPaddingTop = r.getDimensionPixelSize(R.dimen.app_icon_padding_top);
             int top = child.getPaddingTop();
@@ -2610,6 +2616,9 @@ public class Workspace extends PagedView
         // Clear the pressed state if necessary
         if (child instanceof BubbleTextView) {
             BubbleTextView icon = (BubbleTextView) child;
+            icon.clearPressedOrFocusedBackground();
+        } else if (child instanceof AppIconView) {
+            AppIconView icon = (AppIconView) child;
             icon.clearPressedOrFocusedBackground();
         }
 
@@ -4408,7 +4417,7 @@ public class Workspace extends PagedView
                         }
                         for (ApplicationInfo app : apps) {
                             if (app.componentName.equals(name)) {
-                                BubbleTextView shortcut = (BubbleTextView) view;
+                                AppIconView shortcut = (AppIconView) view;
                                 info.updateIcon(mIconCache);
                                 info.title = app.title.toString();
                                 shortcut.applyFromShortcutInfo(info, mIconCache, iconScale);

@@ -1,6 +1,6 @@
-
 /*
  * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2013 The ChameleonOS Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -300,7 +299,7 @@ public final class Launcher extends Activity
     private Canvas mFolderIconCanvas;
     private Rect mRectForFolderAnimation = new Rect();
 
-    private BubbleTextView mWaitingForResume;
+    private AppIconView mWaitingForResume;
 
     private HideFromAccessibilityHelper mHideFromAccessibilityHelper
         = new HideFromAccessibilityHelper();
@@ -358,6 +357,17 @@ public final class Launcher extends Activity
         // Listen for expanded desktop
         getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.EXPANDED_DESKTOP_STATE),
+                false, new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                // Refresh launcher content
+                finish();
+            }
+        });
+
+        // Listen for expanded desktop
+        getContentResolver().registerContentObserver(
+                Settings.Secure.getUriFor(Settings.Secure.ENABLED_NOTIFICATION_LISTENERS),
                 false, new ContentObserver(new Handler()) {
             @Override
             public void onChange(boolean selfChange) {
@@ -793,6 +803,13 @@ public final class Launcher extends Activity
         // Again, as with the above scenario, it's possible that one or more of the global icons
         // were updated in the wrong orientation.
         updateGlobalIcons();
+
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                startService(new Intent(Launcher.this, NotificationListener.class));
+            }
+        }, 2000);
     }
 
     @Override
@@ -1045,7 +1062,7 @@ public final class Launcher extends Activity
      * @return A View inflated from layoutResId.
      */
     View createShortcut(int layoutResId, ViewGroup parent, ShortcutInfo info) {
-        BubbleTextView favorite = (BubbleTextView) mInflater.inflate(layoutResId, parent, false);
+        AppIconView favorite = (AppIconView) mInflater.inflate(layoutResId, parent, false);
         float scale = info.container == LauncherSettings.Favorites.CONTAINER_HOTSEAT ? 1.0f : mIconScale;
         favorite.applyFromShortcutInfo(info, mIconCache, scale);
         if (mHideIconLabels) {
@@ -2102,8 +2119,8 @@ public final class Launcher extends Activity
         	        LauncherModel.updateItemInDatabase(this, (ItemInfo)tag);
             	}
 
-                if (success && v instanceof BubbleTextView) {
-                    mWaitingForResume = (BubbleTextView) v;
+                if (success && v instanceof AppIconView) {
+                    mWaitingForResume = (AppIconView) v;
                     mWaitingForResume.setStayPressed(true);
                 }
             }
